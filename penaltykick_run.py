@@ -405,11 +405,11 @@ def Penaltykick_run(Settings, SubjName, currentRun, DisplayWindow, goalie):
 			myimgfile = 'SmileyFace.jpg'
 		else:
 			if Results[trial]['Opponent'] == 'human':
-				opponents = [f for f in os.listdir('opponents') 
-						if os.path.isfile(os.path.join('opponents', f))
-						if f.endswith('.jpg')]
-				myimgfile = 'opponents/'+random.choice(opponents)
-				#myimgfile = 'opponent.jpg'
+				#opponents = [f for f in os.listdir('opponents') 
+				#		if os.path.isfile(os.path.join('opponents', f))
+				#		if f.endswith('.jpg')]
+				#myimgfile = 'opponents/'+random.choice(opponents)
+				myimgfile = 'opponent.jpg'
 			else:
 				myimgfile = 'Computer.jpg'
 		
