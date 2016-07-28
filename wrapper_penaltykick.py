@@ -182,7 +182,7 @@ def Wrapper_Penaltykick():
 	H = float(settings.ScreenRect[1])
 	settings.BallRadius = W / 128.;
 	settings.BarWidth = settings.BallRadius;
-	settings.BarLength = H / 6.;
+	settings.BarLength = H / 3.;
 	settings.BallStartingPosX = W* -3./ 8.;
 	settings.BallStartingPosY = 0.;
 	settings.BarStartingPosX = W * 3./8.;

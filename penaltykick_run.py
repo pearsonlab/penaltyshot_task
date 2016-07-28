@@ -203,7 +203,12 @@ def playGame(Settings, Results, BallJoystick, BarJoystick, win, trial):
 		ball.draw()
 
 		# Draw Bar
-		barVertices = [ [-W/256., H/12.],[W/256., H/12.],[W/256., -H/12.],[-W/256., -H/12.] ]
+		#barVertices = [ [-W/256., H/12.],[W/256., H/12.],[W/256., -H/12.],[-W/256., -H/12.] ]
+		barVertices = [ [-Settings.BarWidth/2., Settings.BarLength/2.],
+						[Settings.BarWidth/2., Settings.BarLength/2.],
+						[Settings.BarWidth/2., -Settings.BarLength/2.],
+						[-Settings.BarWidth/2., -Settings.BarLength/2.] ]
+
 		bar = visual.ShapeStim(win,vertices=barVertices,fillColor='blue', lineColor='blue')
 		bar.pos = [BarX, BarY]
 		bar.draw()
@@ -303,7 +308,7 @@ def Penaltykick_run(Settings, SubjName, currentRun, DisplayWindow, goalie):
 			curPlayer = Settings.P2Name
 		text = "For this run, %s will control the ball." % curPlayer
 	else:
-		% Otherwise we just say press X or Trigger to begin
+		# Otherwise we just say press X or Trigger to begin
 		curPlayer = Settings.SubjName
 		text = "You will control the ball."
 	
@@ -409,7 +414,7 @@ def Penaltykick_run(Settings, SubjName, currentRun, DisplayWindow, goalie):
 				#		if os.path.isfile(os.path.join('opponents', f))
 				#		if f.endswith('.jpg')]
 				#myimgfile = 'opponents/'+random.choice(opponents)
-				myimgfile = 'opponent.jpg'
+				myimgfile = 'SmileyFace.jpg'
 			else:
 				myimgfile = 'Computer.jpg'
 		
