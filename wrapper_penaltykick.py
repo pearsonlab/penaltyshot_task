@@ -36,7 +36,7 @@ from penaltykick_run import Penaltykick_run
 # 
 #  - 'Vs': used primarily for testing, participant plays against a
 #    human opponent. Two trials are played and the control of the bar and ball
-#    switches between trials (so both players have the opportunity to
+#    switches between runs (so both players have the opportunity to
 #    play as both bar and ball). Fixation crosses between trials
 #    all last 1 second.
 # 
@@ -183,7 +183,7 @@ def Wrapper_Penaltykick():
 	H = float(settings.ScreenRect[1])
 	settings.BallRadius = W / 128.;
 	settings.BarWidth = settings.BallRadius;
-	settings.BarLength = H / 4.5;
+	settings.BarLength = H / 4.0;
 	settings.BallStartingPosX = W* -3./ 8.;
 	settings.BallStartingPosY = 0.;
 	settings.BarStartingPosX = W * 3./8.;
@@ -243,8 +243,11 @@ def Wrapper_Penaltykick():
 		# This is a random permutation of the FixCrossJitterOrder vector.
 		settings.FixCrossJitterOrder = np.random.permutation(FixCrossJitterOrder)
 
-		# Run through runs and trials from penaltykick_run.py (run+1 is hold-over from MATLAB-PYTHON switch)
-		Results, escapeCheck = Penaltykick_run(settings, SubjName, run+1, win, goalie)
+		# Give some time to regroup before each run
+		core.wait(2)
+		
+		# Run through runs and trials from penaltykick_run.py
+		Results, escapeCheck = Penaltykick_run(settings, SubjName, run, win, goalie)
 		
 		# Save Data
 		saveVarsAndData(run, SubjName, settings, Results, P2)

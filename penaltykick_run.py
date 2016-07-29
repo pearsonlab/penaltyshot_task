@@ -309,7 +309,7 @@ def Penaltykick_run(Settings, SubjName, currentRun, DisplayWindow, goalie):
 	
 	# If runType is Vs, we specify which player is controlling the ball.
 	if Settings.runType == 'Vs':
-		if currentRun == 1:
+		if currentRun%2 == 0:
 			curPlayer = Settings.SubjName
 		else:
 			curPlayer = Settings.P2Name
@@ -329,9 +329,9 @@ def Penaltykick_run(Settings, SubjName, currentRun, DisplayWindow, goalie):
 
 
 	if Settings.runType == 'Vs':
-		text = "%s, press X or Trigger to begin run %d" % (curPlayer, currentRun)
+		text = "%s, press X to begin run %d" % (curPlayer, currentRun+1)
 	else:
-		text = "Press X or Trigger to begin run %d" % currentRun
+		text = "Press X to begin run %d" % currentRun+1
 	
 	intro_text = text_draw(win, text)
 	win.flip()
@@ -371,7 +371,7 @@ def Penaltykick_run(Settings, SubjName, currentRun, DisplayWindow, goalie):
 		# These will always be the same.
 		Results[trial]['SubjName'] = SubjName
 		Results[trial]['BallPlayer'] = curPlayer
-		Results[trial]['currentRun'] = currentRun-1
+		Results[trial]['currentRun'] = currentRun
 		Results[trial]['runStart'] = runStart
 		
 		# We update goalie every time because (if it's hmm or hmm_pretrain),
