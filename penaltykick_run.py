@@ -113,7 +113,7 @@ def playGame(Settings, Results, BallJoystick, BarJoystick, win, trial):
 	elif Results[trial]['Opponent'] == 'cpu':
 		tol = 1e-12
 
-	flicker(win, 4)
+	flicker(win, 127)
 
 	while Results[trial]['outcome'] == 0:
 		# First, check to see if the user wants to quit
@@ -251,7 +251,7 @@ def playGame(Settings, Results, BallJoystick, BarJoystick, win, trial):
 		Results[trial]['BallJoystickHistory'] = np.append(Results[trial]['BallJoystickHistory'], [[BallJoystickPosition[0]], [BallJoystickPosition[1]]],axis=1)
 		Results[trial]['BarJoystickHistory'] = np.append(Results[trial]['BarJoystickHistory'], [[BarJoystickPosition[0]], [BarJoystickPosition[1]]],axis=1)
 	
-	flicker(win, 16)
+	flicker(win, 170)
 
 	return Results, escapeCheck
 	
