@@ -88,18 +88,22 @@ def get_settings():
     
 	dlg = gui.Dlg(title='Choose Settings')
 	dlg.addText('Penalty Kick Task', color="Blue")
-	dlg.addText('Players', color="Black")
+	dlg.addText('Players', color="Blue")
 	dlg.addField('Subject ID/P1:', 'practice1')
-	dlg.addField('P2:', 'practice2')
-	dlg.addField('P1 Start:', 'ball', choices=['ball','goalie'])
+	dlg.addField('P2', 'practice2')
 	dlg.addText('')
-	dlg.addText('Modes', color="Black")
+	dlg.addText('Modes and VS Variables', color="Blue")
 	dlg.addField('RunType','Vs', choices=runType_options)
 	dlg.addField('Number of VS Trials', 20)
+	dlg.addField('Number of VS Runs', 2)
+	dlg.addText('')
+	dlg.addText('Goalie Parameters', color="Blue")
 	dlg.addField('GoalieType','guess', choices=goalieType_options)
 	dlg.addField('prior', 1)
-	dlg.addField('BallSpeed', 200)
+	dlg.addField('BallSpeed Factor', 1.0)
+	dlg.addText('')
 	dlg.addField('FullScreen', True, choices=[False,True])
+	dlg.addText('')
 	
 	dlg.show()
 	if dlg.OK:
@@ -110,7 +114,7 @@ def get_settings():
 def Wrapper_Penaltykick():
 	
 	# DLG
-	SubjName, P2, P1_start, runType, VS, goalieType, prior, BallSpeed, full = get_settings()
+	SubjName, P2, runType, VS_trials, VS_runs, goalieType, prior, BallSpeed, full = get_settings()
 	
 	# We load the settings class from Settings.py (see
     # README.md for a description of the fields it contains)
@@ -125,6 +129,7 @@ def Wrapper_Penaltykick():
 	
 	# Make sure runType is implemented and set the relevant variables.
 	if runType == 'experiment':
+		settings.SubjName = SubjName
 		settings.RunLength = 60
 		OpponentOrder = np.tile(['human', 'cpu'],settings.RunLength/2)
 		allRuns = 4
@@ -138,6 +143,7 @@ def Wrapper_Penaltykick():
 		FixCrossJitterOrder = FixCrossJitterOrder+1
 		FixCrossJitterOrder = np.floor(FixCrossJitterOrder/0.5)*0.5
 	elif runType == 'train':
+		settings.SubjName = SubjName
 		settings.RunLength = 20
 		OpponentOrder = np.tile(['cpu'], settings.RunLength)
 		allRuns = 1
@@ -147,20 +153,15 @@ def Wrapper_Penaltykick():
 	elif runType == 'Vs':
 		settings.SubjName = SubjName
 		settings.P2Name = P2
-		settings.RunLength = VS
+		settings.RunLength = VS_trials
 		OpponentOrder = np.tile(['human'], settings.RunLength)
-		allRuns = 2
+		allRuns = VS_runs
 		# If this is runType Vs, we don't need different jitters, we just
         # want a small length of time between trials.
 		FixCrossJitterOrder = np.tile(1, settings.RunLength)
 
-		# Sets either P1 as ball first or P2 as ball first.
-		if P1_start == "ball":
-			settings.BallJoystickNum = 0
-			settings.BarJoystickNum = 1
-		else:
-			settings.BallJoystickNum = 1
-			settings.BarJoystickNum = 0
+		settings.BallJoystickNum = 0
+		settings.BarJoystickNum = 1
 	else:
 		raise ValueError("Wrapper: runType not found. Can't find runType %s!" % runType)
 	
@@ -182,7 +183,7 @@ def Wrapper_Penaltykick():
 	H = float(settings.ScreenRect[1])
 	settings.BallRadius = W / 128.;
 	settings.BarWidth = settings.BallRadius;
-	settings.BarLength = H / 3.;
+	settings.BarLength = H / 4.5;
 	settings.BallStartingPosX = W* -3./ 8.;
 	settings.BallStartingPosY = 0.;
 	settings.BarStartingPosX = W * 3./8.;
@@ -193,7 +194,7 @@ def Wrapper_Penaltykick():
 	#position of the joystick vertical axis (which lies between -1 and
 	#1), we multiply that value by BallSpeed, ensuring that the
 	#ball's max vertical speed is the same as its horizontal speed	
-	settings.BallSpeed = W / BallSpeed
+	settings.BallSpeed = (W / 200.) * BallSpeed
 	
 	# To allow for bar acceleration, we start them with a slower speed and
 	# an acceleration parameter, which determines how much their
@@ -257,18 +258,16 @@ def Wrapper_Penaltykick():
     	# list of outcomes (and opponents).
 		if runType == 'Vs':
 
-			if run == 0:
+			# If it's run 0 or an even numbered run.
+			if run % 2 == 0:
 				for i in range(len(Results)):
 					if Results[i]['outcome'] == 'win':
 						p1_ball_win += 1.0
 					else:
 						p2_bar_win += 1.0
 					first_round += 1.0
-				temp = settings.BarJoystickNum
-				settings.BarJoystickNum = settings.BallJoystickNum
-				settings.BallJoystickNum = temp
-				P1BallWinPercentage = p1_ball_win/first_round
-				P2BarWinPercentage = p2_bar_win/first_round
+			
+			# If it's run 1 or an odd numbered run.
 			else:
 				for i in range(len(Results)):
 					if Results[i]['outcome'] == 'win':
@@ -277,8 +276,10 @@ def Wrapper_Penaltykick():
 						p1_bar_win += 1.0
 					second_round += 1.0
     		
-				P1BarWinPercentage = p1_bar_win/second_round
-				P2BallWinPercentage = p2_ball_win/second_round
+    		# Swap numbers for Bar and Ball Joysticks for next round
+			temp = settings.BarJoystickNum
+			settings.BarJoystickNum = settings.BallJoystickNum
+			settings.BallJoystickNum = temp
 		else:
 
 			for i in range(len(Results)):
@@ -303,6 +304,11 @@ def Wrapper_Penaltykick():
 	# Display final screen with outcomes and percentages on it,
 	# based on runType and Results (as calculated above).
 	if runType == 'Vs':
+		P1BallWinPercentage = p1_ball_win/first_round
+		P2BarWinPercentage = p2_bar_win/first_round
+		P1BarWinPercentage = p1_bar_win/second_round
+		P2BallWinPercentage = p2_ball_win/second_round
+
 		text = "As ball - %.1f %%" % ((100*P1BallWinPercentage))
 		text2 = "As bar - %.1f %%" % ((100*P1BarWinPercentage))
 		text3 = "As ball - %.1f %%" % ((100*P2BallWinPercentage))

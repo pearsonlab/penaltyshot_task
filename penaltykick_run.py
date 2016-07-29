@@ -7,6 +7,7 @@ from input_handler import JoystickServer
 from goalie_wrapper import computer_goalie
 import random
 import pygame
+from utils import flicker
 
 # Penalty Kick game by Jean-Francois Gariepy, overhauled by Bill
 # Broderick. Python version from John Pearson's lab.
@@ -84,13 +85,16 @@ def playGame(Settings, Results, BallJoystick, BarJoystick, win, trial):
 	# BallJoystickHistory, and BarJoystickHistory each iteration of the
 	# loop and will add the outcome, trialLength, and trialStart to the
 	# Results struct.
+	
+
 	# Initialize the trial-related variables.
+	
 	BallX, BallY = Settings.BallStartingPosX, Settings.BallStartingPosY
 	BarX, BarY = Settings.BarStartingPosX, Settings.BarStartingPosY
-	Results[trial]['StartOfGame'] = core.getTime() - Results[trial]['runStart']
+	Results[trial]['StartOfGame'] =  core.getTime() - Results[trial]['runStart']
 	escapeCheck = False
 	accel = 1.0
-	
+
 	# If the goalie has a lag, we record it.	
 	try:
 		Results[trial]['CpuBarLagThisTrial'] = Results[trial]['goalie'].LagThisTrial
@@ -108,7 +112,9 @@ def playGame(Settings, Results, BallJoystick, BarJoystick, win, trial):
 		tol = 1e-1
 	elif Results[trial]['Opponent'] == 'cpu':
 		tol = 1e-12
-	
+
+	flicker(win, 4)
+
 	while Results[trial]['outcome'] == 0:
 		# First, check to see if the user wants to quit
 		escapeCheck = BallJoystick.JoystickEscape()	
@@ -198,12 +204,11 @@ def playGame(Settings, Results, BallJoystick, BarJoystick, win, trial):
 		H=Settings.ScreenRect[1]
 		
 		# Draw the Ball
-		ball = visual.Circle(win, radius=W/128., fillColor='red', lineColor='red')
+		ball = visual.Circle(win, radius=Settings.BallRadius, fillColor='red', lineColor='red')
 		ball.pos = [BallX, BallY]
 		ball.draw()
 
 		# Draw Bar
-		#barVertices = [ [-W/256., H/12.],[W/256., H/12.],[W/256., -H/12.],[-W/256., -H/12.] ]
 		barVertices = [ [-Settings.BarWidth/2., Settings.BarLength/2.],
 						[Settings.BarWidth/2., Settings.BarLength/2.],
 						[Settings.BarWidth/2., -Settings.BarLength/2.],
@@ -214,7 +219,7 @@ def playGame(Settings, Results, BallJoystick, BarJoystick, win, trial):
 		bar.draw()
         
         # Draw Final Line
-		line = visual.Line(win, start=(W*3./8. + W/64., H/2.), end=(W*3./8. + W/64., -H/2.))
+		line = visual.Line(win, start=(Settings.FinalLine, H/2.), end=(Settings.FinalLine, -H/2.))
 		line.draw()
 
 		# Check how long the game has gone on for. Need to subtract both
@@ -223,7 +228,7 @@ def playGame(Settings, Results, BallJoystick, BarJoystick, win, trial):
 		Results[trial]['trialLength'] = core.getTime() - Results[trial]['runStart'] - Results[trial]['StartOfGame']
 		
 		# Check for result conditions
-		if BallX+Settings.BallRadius/2. >= BarX-Settings.BarWidth/2. and BallX-Settings.BallRadius/2. <= BarX+Settings.BarWidth/2. and BallY+Settings.BallRadius/2. > BarY-Settings.BarLength/2. and BallY-Settings.BallRadius/2. < BarY+Settings.BarLength/2:
+		if BallX+Settings.BallRadius >= BarX-Settings.BarWidth/2. and BallX-Settings.BallRadius <= BarX+Settings.BarWidth/2. and BallY+Settings.BallRadius > BarY-Settings.BarLength/2. and BallY-Settings.BallRadius < BarY+Settings.BarLength/2:
 			Results[trial]['outcome'] = 'loss'
 			# With the parameter clearBuffer set to False, the display will not be
 			# overwritten at the next flip, allowing us to add text
@@ -245,7 +250,9 @@ def playGame(Settings, Results, BallJoystick, BarJoystick, win, trial):
 		Results[trial]['BallPositions'] = np.append(Results[trial]['BallPositions'], [[BallX],[BallY]], axis=1)
 		Results[trial]['BallJoystickHistory'] = np.append(Results[trial]['BallJoystickHistory'], [[BallJoystickPosition[0]], [BallJoystickPosition[1]]],axis=1)
 		Results[trial]['BarJoystickHistory'] = np.append(Results[trial]['BarJoystickHistory'], [[BarJoystickPosition[0]], [BarJoystickPosition[1]]],axis=1)
-			
+	
+	flicker(win, 16)
+
 	return Results, escapeCheck
 	
 def Penaltykick_run(Settings, SubjName, currentRun, DisplayWindow, goalie):
@@ -318,6 +325,7 @@ def Penaltykick_run(Settings, SubjName, currentRun, DisplayWindow, goalie):
 	core.wait(2)
 	player_text.autoDraw = False
 	win.flip()
+	core.wait(2)
 
 
 	if Settings.runType == 'Vs':
@@ -454,10 +462,10 @@ def Penaltykick_run(Settings, SubjName, currentRun, DisplayWindow, goalie):
 		# Only pass the last trial if there was a last trial.
 		else:
 			Results[trial]['goalie'] = Results[trial]['goalie'].trial_start()
-		
+
 		# Play the game
 		Results, escapeCheck = playGame(Settings, Results, BallJoystick, BarJoystick, win, trial)
-		
+
 		# Check for escapeCheck
 		if escapeCheck:
 			return Results, escapeCheck
@@ -480,7 +488,7 @@ def Penaltykick_run(Settings, SubjName, currentRun, DisplayWindow, goalie):
 										wrapWidth=2)
 		final_text.draw()
 		win.flip()
-		
+
 		core.wait(Settings.TimeToWaitAfterOutcome)
 				
 		win.flip()
