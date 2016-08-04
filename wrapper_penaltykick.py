@@ -393,6 +393,10 @@ def saveVarsAndData(currentRun, SubjName, Settings, Results, P2):
         settings['ScreenRect'] = settings['ScreenRect'].tolist()
         settings['OpponentOrder'] = settings['OpponentOrder'].tolist()
         settings['FixCrossJitterOrder'] = settings['FixCrossJitterOrder'].tolist()
+        
+        # write out finish time
+        t = datetime.now()
+        settings['overallEndTime'] = '%d:%d:%d:%d' % (t.hour, t.minute, t.second, t.microsecond)
 
         with open(filename, 'a') as f:
             f.write(json.dumps(settings))
