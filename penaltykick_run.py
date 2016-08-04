@@ -205,7 +205,7 @@ def playGame(Settings, Results, BallJoystick, BarJoystick, win, trial):
 
         # Draw the Ball
         ball = visual.Circle(win, radius=Settings.BallRadius, fillColor='red', lineColor='red')
-        ball.pos = [BallX, BallY]
+        ball.pos = (BallX, BallY)
         ball.draw()
 
         # Draw Bar
@@ -230,20 +230,19 @@ def playGame(Settings, Results, BallJoystick, BarJoystick, win, trial):
         # Check for result conditions
         if BallX+Settings.BallRadius >= BarX-Settings.BarWidth/2. and BallX-Settings.BallRadius <= BarX+Settings.BarWidth/2. and BallY+Settings.BallRadius > BarY-Settings.BarLength/2. and BallY-Settings.BallRadius < BarY+Settings.BarLength/2:
             Results[trial]['outcome'] = 'loss'
-            # With the parameter clearBuffer set to False, the display will not be
-            # overwritten at the next flip, allowing us to add text
-            # saying "win" over the final state of the game
-            win.flip(clearBuffer=False)
+            win.flip()
+            line.draw()
+            ball.draw()
+            bar.draw()
         elif BallX+Settings.BallRadius > Settings.FinalLine:
             Results[trial]['outcome'] = 'win'
-            # With the parameter clearBuffer set to False, the display will not be
-            # overwritten at the next flip, allowing us to add text
-            # saying "win" over the final state of the game
-            win.flip(clearBuffer=False)
+            win.flip()    
+            line.draw()
+            bar.draw()
+            ball.draw()
         else:
-            # Refresh the screen.
             win.flip()
-
+            
         # Update the timing, position, and joystick variables.
         Results[trial]['TimingSequence'].append(core.getTime() - Results[trial]['runStart'] - Results[trial]['trialStart'])
         Results[trial]['BarY'].append(BarY)
@@ -251,7 +250,7 @@ def playGame(Settings, Results, BallJoystick, BarJoystick, win, trial):
         Results[trial]['BallJoystickHistory'] = np.append(Results[trial]['BallJoystickHistory'], [[BallJoystickPosition[0]], [BallJoystickPosition[1]]],axis=1)
         Results[trial]['BarJoystickHistory'] = np.append(Results[trial]['BarJoystickHistory'], [[BarJoystickPosition[0]], [BarJoystickPosition[1]]],axis=1)
 
-    flicker(win, 170)
+#    flicker(win, 170)
 
     return Results, escapeCheck
 
@@ -488,10 +487,12 @@ def Penaltykick_run(Settings, SubjName, currentRun, DisplayWindow, goalie):
                                         wrapWidth=2)
         final_text.draw()
         win.flip()
-
+        final_text.autoDraw = False
         core.wait(Settings.TimeToWaitAfterOutcome)
-
+        win.clearBuffer()
         win.flip()
+        win.flip()
+        flicker(win, 170)
 
         #Check to see if escape has been pressed. If it has, return.
         escapeCheck = BallJoystick.JoystickEscape()
