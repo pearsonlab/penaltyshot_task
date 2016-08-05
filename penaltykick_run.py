@@ -93,7 +93,7 @@ def playGame(Settings, Results, BallJoystick, BarJoystick, win, trial):
     BarX, BarY = Settings.BarStartingPosX, Settings.BarStartingPosY
     Results[trial]['StartOfGame'] =  core.getTime() - Results[trial]['runStart']
     escapeCheck = False
-    accel = 1.0
+    accel = 0.0
 
     # If the goalie has a lag, we record it.
     try:
@@ -141,35 +141,36 @@ def playGame(Settings, Results, BallJoystick, BarJoystick, win, trial):
         # were during the last refresh, accelerate. We use
         # np.isclose here because precision errors may make them
         # trivially different.
-        if len(Results[trial]['BarY'])>=3.0 and not np.isclose(Results[trial]['BarY'][-1], Results[trial]['BarY'][-2]) and np.sign(Results[trial]['BarY'][-1]-Results[trial]['BarY'][-2]) == np.sign(Results[trial]['BarY'][-2]-Results[trial]['BarY'][-3]):
-            if Results[trial]['Opponent'] == 'cpu':
-                # We only increase accel if they used their max
-                # move, otherwise it stays the same. This is to
-                # prevent "teleportations" when the goalie's
-                # strategy changes. For computers, we're only
-                # dealing with small precision errors.
-                if np.isclose(Results[trial]['maxMove'][-1], abs(Results[trial]['BarY'][-1]-Results[trial]['BarY'][-2]), atol=tol):
-                    accel = accel + Settings.BarJoystickAccelIncr
-            elif Results[trial]['Opponent'] == 'human':
-                # When the human is controlling the goalie, we're not only dealing
-                # with precision errors, but also issues getting input
-                # from the controller. To deal
-                # with this, instead of looking at the move, which
-                # will vary in magnitude much more, we look at the
-                # joystick input, since that's where the issue
-                # originates. We then increment accel when the
-                # joystick input is in [-1, -.8] or [.8, 1] instead of
-                # just when its 1 or -1. This should hopefully make
-                # acceleration more consistent. I'm (Bill) less worried about
-                # the "teleportation" with the human goalie and more
-                # about them being unable to accelerate, so setting
-                # larger and larger tolerance values here is fine.
-                if np.isclose(abs(Results[trial]['BarJoystickHistory'][-1]),1, atol=0.2).any():
-                    accel = accel + Settings.BarJoystickAccelIncr
-        # Otherwise, reset the acceleration value
-        else:
-            accel = 1.0
-        Results[trial]['accel'].append(accel)
+#        if len(Results[trial]['BarY'])>=3.0 and not np.isclose(Results[trial]['BarY'][-1], Results[trial]['BarY'][-2]) and np.sign(Results[trial]['BarY'][-1]-Results[trial]['BarY'][-2]) == np.sign(Results[trial]['BarY'][-2]-Results[trial]['BarY'][-3]):
+#            if Results[trial]['Opponent'] == 'cpu':
+#                # We only increase accel if they used their max
+#                # move, otherwise it stays the same. This is to
+#                # prevent "teleportations" when the goalie's
+#                # strategy changes. For computers, we're only
+#                # dealing with small precision errors.
+#                if np.isclose(Results[trial]['maxMove'][-1], abs(Results[trial]['BarY'][-1]-Results[trial]['BarY'][-2]), atol=tol):
+#                    accel = accel + Settings.BarJoystickAccelIncr
+#            elif Results[trial]['Opponent'] == 'human':
+#                # When the human is controlling the goalie, we're not only dealing
+#                # with precision errors, but also issues getting input
+#                # from the controller. To deal
+#                # with this, instead of looking at the move, which
+#                # will vary in magnitude much more, we look at the
+#                # joystick input, since that's where the issue
+#                # originates. We then increment accel when the
+#                # joystick input is in [-1, -.8] or [.8, 1] instead of
+#                # just when its 1 or -1. This should hopefully make
+#                # acceleration more consistent. I'm (Bill) less worried about
+#                # the "teleportation" with the human goalie and more
+#                # about them being unable to accelerate, so setting
+#                # larger and larger tolerance values here is fine.
+#                if np.isclose(abs(Results[trial]['BarJoystickHistory'][-1]),1, atol=0.2).any():
+#                    accel = accel + Settings.BarJoystickAccelIncr
+#        # Otherwise, reset the acceleration value
+#        else:
+#            accel = 1.0
+#        accel = (1 - 0.5) * accel + Settings.BarJoystickAccelIncr * BarJoystickPosition[1]
+#        Results[trial]['accel'].append(accel)
 
         # The maxMove value here is the magnitude of the largest possible move
         # the bar could make. Since BarJoystickPosition will lie
@@ -185,7 +186,11 @@ def playGame(Settings, Results, BallJoystick, BarJoystick, win, trial):
         if Results[trial]['Opponent'] == 'human':
             BarJoystickPosition = BarJoystick.CalibratedJoystickAxes() # Joystick
             # Get the bar position from the joystick.
-            BarY = BarY + maxMove*BarJoystickPosition[1] # Joystick
+#            BarY = BarY + maxMove*BarJoystickPosition[1] # Joystick
+            accel = (1 - 0.08) * accel + Settings.BarJoystickAccelIncr * BarJoystickPosition[1]
+            Results[trial]['accel'].append(accel)
+            BarY = BarY + maxMove # Joystick
+
         else:
             # If the goalie is 'cpu', we don't do anything with the
             # BarJoystick. But we still put values here so we can
@@ -198,6 +203,8 @@ def playGame(Settings, Results, BallJoystick, BarJoystick, win, trial):
                 Results[trial]['dest'].append(new_dest)
 
         # We don't want to allow any of the bar off the screen.
+        if BarY < -Settings.ScreenRect[1]/2+Settings.BarLength/2 or BarY >  Settings.ScreenRect[1]/2 - Settings.BarLength/2:
+            accel = 0.
         BarY = max(-Settings.ScreenRect[1]/2+Settings.BarLength/2, min(BarY, Settings.ScreenRect[1]/2 - Settings.BarLength/2))
 
         W=Settings.ScreenRect[0]

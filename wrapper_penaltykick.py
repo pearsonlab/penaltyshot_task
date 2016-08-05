@@ -200,7 +200,7 @@ def Wrapper_Penaltykick():
     # an acceleration parameter, which determines how much their
     # speed increases each move they continue in the same direction
     settings.BarJoystickBaseSpeed = settings.BallSpeed / 1.5
-    settings.BarJoystickAccelIncr = settings.BallSpeed / 90.
+    settings.BarJoystickAccelIncr = settings.BallSpeed / 45.
 
     # Initialize the goalie
     if settings.goalieType == 'react':
