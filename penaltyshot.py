@@ -20,16 +20,10 @@ from settings import *
 _thisDir = os.path.dirname(os.path.abspath(__file__)).decode(sys.getfilesystemencoding())
 os.chdir(_thisDir)
 
-# # We load the settings class from Settings.py (see
-# # README.md for a description of the fields it contains)
-# settings = Settings()
-
 # This is the current date and time. The date will be scrubbed from it
 # before saving to only record the day time in hours, mins, secs, microseconds.
 t = datetime.now()
 settings['overallStartTime'] = '%d.%d.%d' % (t.hour, t.minute, t.second)
-# Remove currentDate information for privacy/identification purposes.
-del t
 
 # get setup info about current session:
 config = get_settings()
@@ -40,6 +34,12 @@ filename = _thisDir + os.sep + u'data/%s_%s_%s' %(config['SubjName'], 'penaltysh
 #save a log file for detail verbose info
 logFile = logging.LogFile(filename+'.log', level=logging.EXP)
 logging.console.setLevel(logging.WARNING)  # this outputs to the screen, not a file
+
+# log start time for the experiment
+logging.log(level=logging.EXP, msg='Task start time: {}:{}:{}'.format(t.hour, t.minute, t.second))
+
+# Remove currentDate information for privacy/identification purposes.
+del t
 
 ########## Set up hardware #####################
 full = False #config['full']
@@ -117,4 +117,7 @@ while not endExpNow:
     # check for quit:
     if 'escape' in theseKeys:
         endExpNow = True
+        t = datetime.now()
+        # log end time for the experiment
+        logging.log(level=logging.EXP, msg='Task finish time: {}:{}:{}'.format(t.hour, t.minute, t.second))
         logging.flush()
