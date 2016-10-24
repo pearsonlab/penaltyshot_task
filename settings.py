@@ -1,5 +1,40 @@
 import numpy as np
 from scipy.stats import beta
+from psychopy import gui
+
+def get_settings():
+    # This function defines the DLG at the beginning of the experiment where
+    # the experimenter can set information and make decisions about parameters.
+    # File name is ultimately saved based on several of these characteristics,
+    # (namely runType, SubjID, P2 and a counter for how many times that combination
+    # of settings has been used (to avoid overwriting files)).
+    runType_options = ['experiment', 'train', 'Vs']
+    goalieType_options = ['guess', 'react']
+
+    dlg = gui.Dlg(title='Choose Settings')
+    dlg.addText('Penalty Shot Task', color="Blue")
+    dlg.addText('Players', color="Blue")
+    dlg.addField('Subject ID/P1:', 'practice1')
+    dlg.addField('P2', 'practice2')
+    dlg.addText('')
+    dlg.addText('Modes and VS Variables', color="Blue")
+    dlg.addField('RunType','Vs', choices=runType_options)
+    dlg.addField('Number of VS Trials', 20)
+    dlg.addField('Number of VS Runs', 2)
+    dlg.addText('')
+    dlg.addText('Goalie Parameters', color="Blue")
+    dlg.addField('GoalieType','guess', choices=goalieType_options)
+    dlg.addField('prior', 1)
+    dlg.addField('BallSpeed Factor', 1.0)
+    dlg.addText('')
+    dlg.addField('FullScreen', True, choices=[False,True])
+    dlg.addText('')
+
+    dlg.show()
+    if dlg.OK:
+        return dlg.data
+    else:
+        sys.exit()
 
 class Settings(object):
     # Default variables
