@@ -26,7 +26,7 @@ settings = Settings()
 # This is the current date and time. The date will be scrubbed from it
 # before saving to only record the day time in hours, mins, secs, microseconds.
 t = datetime.now()
-settings.overallStartTime = '%d:%d:%d:%d' % (t.hour, t.minute, t.second, t.microsecond)
+settings.overallStartTime = '%d:%d:%d' % (t.hour, t.minute, t.second) 
 # Remove currentDate information for privacy/identification purposes.
 del t
 
