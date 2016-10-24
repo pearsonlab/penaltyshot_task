@@ -1,6 +1,7 @@
 import numpy as np
 from scipy.stats import beta
 from psychopy import gui
+import sys
 
 def get_settings():
     # This function defines the DLG at the beginning of the experiment where
@@ -30,11 +31,50 @@ def get_settings():
     dlg.addField('FullScreen', True, choices=[False,True])
     dlg.addText('')
 
+    fieldnames = ['SubjName', 'P2', 'runType', 'VS_trials', 'VS_runs', 'goalieType', 'prior', 'BallSpeed', 'full']
+
     dlg.show()
     if dlg.OK:
-        return dlg.data
+        return dict(zip(fieldnames, dlg.data))
     else:
         sys.exit()
+
+def setup_geometry(settings, win, **kwargs):
+    # set up the geometry of the screen given a settings object and a
+    # window to attach to
+
+    # store frame rate of monitor if we can measure it successfully
+    settings.frameRate = win.getActualFrameRate()
+    if settings.frameRate != None:
+        frameDur = 1.0/round(settings.frameRate)
+    else:
+        frameDur = 1.0/60.0 # couldn't get a reliable measure so guess
+
+    settings.ScreenRect = win.size
+    W = float(settings.ScreenRect[0])
+    H = float(settings.ScreenRect[1])
+    settings.BallRadius = W / 128.;
+    settings.BarWidth = settings.BallRadius;
+    settings.BarLength = H / 4.0;
+    settings.BallStartingPosX = W* -3./ 8.;
+    settings.BallStartingPosY = 0.;
+    settings.BarStartingPosX = W * 3./8.;
+    settings.BarStartingPosY = settings.BallStartingPosY;
+    settings.FinalLine = settings.BarStartingPosX + 3*settings.BarWidth;
+
+    #This is how fast the ball moves horizontally. When we get the
+    #position of the joystick vertical axis (which lies between -1 and
+    #1), we multiply that value by BallSpeed, ensuring that the
+    #ball's max vertical speed is the same as its horizontal speed
+    settings.BallSpeed = (W / 200.) * kwargs['BallSpeed']
+
+    # To allow for bar acceleration, we start them with a slower speed and
+    # an acceleration parameter, which determines how much their
+    # speed increases each move they continue in the same direction
+    settings.BarJoystickBaseSpeed = settings.BallSpeed / 1.5
+    settings.BarJoystickAccelIncr = settings.BallSpeed / 90.
+
+    return
 
 class Settings(object):
     # Default variables
