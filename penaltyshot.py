@@ -7,6 +7,7 @@ import numpy as np
 from psychopy import gui, visual, event, core, logging, data
 from psychopy.constants import *  # things like STARTED, FINISHED
 from psychopy.hardware import joystick
+from input_handler import JoystickServer
 from datetime import datetime
 import sys
 import os
@@ -26,7 +27,7 @@ settings = Settings()
 # This is the current date and time. The date will be scrubbed from it
 # before saving to only record the day time in hours, mins, secs, microseconds.
 t = datetime.now()
-settings.overallStartTime = '%d:%d:%d' % (t.hour, t.minute, t.second) 
+settings.overallStartTime = '%d:%d:%d' % (t.hour, t.minute, t.second)
 # Remove currentDate information for privacy/identification purposes.
 del t
 
@@ -41,22 +42,34 @@ logFile = logging.LogFile(filename+'.log', level=logging.EXP)
 logging.console.setLevel(logging.WARNING)  # this outputs to the screen, not a file
 
 ########## Set up hardware #####################
-full = config['full']
+full = False #config['full']
 win = visual.Window(size=(800, 600), units='pix', winType = 'pygame', screen=1,
-                    monitor='testMonitor', fullscr=False, colorSpace='rgb255',
+                    monitor='testMonitor', fullscr=full, colorSpace='rgb255',
                     color=(0, 0, 0))
 
+# turn of mouse display
 win.mouseVisible = False
 
+# set up screen geometry based on window size
 setup_geometry(settings, win, **config)
 
 # Make sure one joystick is connected.
 joystick.backend = 'pygame'
 nJoysticks = joystick.getNumJoysticks()
+logging.log(level=logging.EXP, msg='{} joysticks detected'.format(nJoysticks))
 
 if nJoysticks == 0:
     print 'There is no joystick connected!'
     core.quit()
+else:
+    BallJoystick = JoystickServer(Settings.BallJoystickNum, Settings.BallJoystickDeadZone)
+    if nJoysticks > 1:
+        BarJoystick = JoystickServer(Settings.BarJoystickNum, Settings.BarJoystickDeadZone)
 
+# set up photodiode trigger
+trigger = Flicker(win)
+
+# write out everything logged so far
+logging.flush()
 
 endExpNow = False  # flag for 'escape' or other condition => quit the exp
