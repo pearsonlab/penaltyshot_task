@@ -61,6 +61,7 @@ def setup_geometry(settings, win, **kwargs):
     settings.BarStartingPosX = W * 3./8.;
     settings.BarStartingPosY = settings.BallStartingPosY;
     settings.FinalLine = settings.BarStartingPosX + 3*settings.BarWidth;
+    settings.FinalLineHalfHeight = H/2.
 
     #This is how fast the ball moves horizontally. When we get the
     #position of the joystick vertical axis (which lies between -1 and

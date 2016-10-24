@@ -69,7 +69,46 @@ else:
 # set up photodiode trigger
 trigger = Flicker(win)
 
+########## Set up stims #####################
+fixation = visual.TextStim(win, text='+',
+                            alignHoriz='center',
+                            alignVert='center', units='norm',
+                            pos=(0, 0), height=0.3,
+                            color=[255, 255, 255], colorSpace='rgb255',
+                            wrapWidth=2, name='fix_cross', autoLog=True)
+display_text = visual.TextStim(win, text='Your text here',
+                               font='Helvetica', alignHoriz='center',
+                               alignVert='center', units='norm',
+                               pos=(0, 0), height=0.1,
+                               color=[255, 255, 255], colorSpace='rgb255',
+                               wrapWidth=2, name='display_text',
+                               autoLog=True)
+ball = visual.Circle(win, radius=settings.BallRadius, fillColor='red',
+                     lineColor='red', pos=(settings.BallStartingPosX,
+                     settings.BallStartingPosY))
+barVertices = [ [-settings.BarWidth/2., settings.BarLength/2.],
+                [settings.BarWidth/2., settings.BarLength/2.],
+                [settings.BarWidth/2., -settings.BarLength/2.],
+                [-settings.BarWidth/2., -settings.BarLength/2.] ]
+bar = visual.ShapeStim(win,vertices=barVertices,fillColor='blue',
+                       lineColor='blue', pos=(settings.BarStartingPosX,
+                       settings.BarStartingPosY))
+line = visual.Line(win, start=(settings.FinalLine,
+                               settings.FinalLineHalfHeight),
+                        end=(settings.FinalLine,
+                               -settings.FinalLineHalfHeight))
+line.draw()
+bar.draw()
+ball.draw()
+
+win.flip()
+core.wait(2)
+
 # write out everything logged so far
 logging.flush()
+
+# Create some handy timers
+globalClock = core.Clock()  # to track the time since experiment started
+# routineTimer = core.CountdownTimer()  # to track time remaining of each (non-slip) routine
 
 endExpNow = False  # flag for 'escape' or other condition => quit the exp
