@@ -97,8 +97,9 @@ line = visual.Line(win, start=(settings['FinalLine'],
                                settings['FinalLineHalfHeight']),
                         end=(settings['FinalLine'],
                                -settings['FinalLineHalfHeight']),
-                   name='goal_line')
+                        name='goal_line')
 
+############# finalize setup ###############
 # log all settings
 logging.log(level=logging.EXP, msg='settings = {}'.format(repr(settings)))
 # write out everything logged so far
@@ -106,9 +107,14 @@ logging.flush()
 
 # Create some handy timers
 globalClock = core.Clock()  # to track the time since experiment started
-# routineTimer = core.CountdownTimer()  # to track time remaining of each (non-slip) routine
 
+############# prepare to start trial loop ###############
 endExpNow = False  # flag for 'escape' or other condition => quit the exp
 
-# while not endExpNow:
-#     pass
+while not endExpNow:
+    theseKeys = event.getKeys(keyList=['escape'])
+
+    # check for quit:
+    if 'escape' in theseKeys:
+        endExpNow = True
+        logging.flush()
