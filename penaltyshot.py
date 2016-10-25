@@ -55,12 +55,12 @@ json_fp.write('\n')
 del t
 
 ########## Set up hardware #####################
-full = False #config['full']
+full = config['full']
 win = visual.Window(size=(800, 600), units='pix', winType = 'pygame', screen=1,
                     monitor='testMonitor', fullscr=full, colorSpace='rgb255',
                     color=(0, 0, 0))
 
-# turn of mouse display
+# turn off mouse display
 win.mouseVisible = False
 
 # set up screen geometry based on window size
@@ -128,7 +128,7 @@ globalClock = core.Clock()  # to track the time since experiment started
 trialClock = core.Clock()  # time within trial
 playClock = core.Clock()  # time within trial
 
-############# prepare to start trial loop ###############
+############# prepare to start main experiment loop ###############
 endExpNow = False  # flag for 'escape' or other condition => quit the exp
 thisTrial = 0
 logging.log(level=logging.EXP, msg='Starting task')
@@ -136,11 +136,13 @@ logging.log(level=logging.EXP, msg='Starting task')
 while not endExpNow:  # main experiment loop
 
     ###### set up for  trial ############
+    thisTrial += 1
+    logging.log(level=logging.EXP, msg='Start trial {}'.format(thisTrial))
+
+    # sentinel variables for task state
     endTrialNow = False  # flag for escape from trial
     winner = None  # has the trial completed
     playOn = False  # has play commenced
-    thisTrial += 1
-    logging.log(level=logging.EXP, msg='Start trial {}'.format(thisTrial))
 
     # reset stims
     trialComponents = [fixation, display_text, ball, bar, line]
@@ -164,7 +166,7 @@ while not endExpNow:  # main experiment loop
     bar.accel = []
     bar.maxmove = []
 
-    # timing setup
+    # reset clocks
     t = 0  # time in trial
     frameN = -1  # frame within trial
     tTrialStart = globalClock.getTime()
@@ -276,4 +278,5 @@ logging.flush()
 # close out data object
 dat['psychopy_end_time'] = core.getAbsTime()
 dat['end_time'] = '{}:{}:{}'.format(t.hour, t.minute, t.second)
+# re-dump metadata with end times included
 json.dump(dat, json_fp)
