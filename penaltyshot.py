@@ -103,7 +103,7 @@ bar = visual.ShapeStim(win,vertices=barVertices,fillColor='blue',
 ############# match inputs to players ###############
 # default to these assignments (can change by block)
 ball.joystick = J0
-bar.joystcik = J1
+bar.joystick = J1
 
 ############# finalize setup ###############
 # log all settings
@@ -128,7 +128,7 @@ while not endExpNow:  # main experiment loop
     trialOver = False  # has the trial completed
     playOn = False  # has play commenced
     thisTrial += 1
-    event.clearEvents(eventType='keyboard')
+    event.clearEvents()
     logging.log(level=logging.EXP, msg='Start trial {}'.format(thisTrial))
 
     # reset stims
@@ -143,9 +143,14 @@ while not endExpNow:  # main experiment loop
     playStart = fixStart + fixTime
 
     # reset players
-    ball.pos = (settings['BallStartingPosX'], settings['BallStartingPosY'])
-    bar.pos = (settings['BarStartingPosX'], settings['BarStartingPosY'])
-    ball.accel = 1.0
+    ball.setPos((settings['BallStartingPosX'], settings['BallStartingPosY']), log=False)
+    ball.history = []
+    ball.jhistory = []
+    bar.setPos((settings['BarStartingPosX'], settings['BarStartingPosY']), log=False)
+    bar.history = []
+    bar.jhistory = []
+    bar.accel = []
+    bar.maxmove = []
 
     # timing setup
     t = 0  # time in trial
@@ -168,15 +173,18 @@ while not endExpNow:  # main experiment loop
 
         # update fixation cross
         if t >= fixStart and fixation.status == NOT_STARTED:
-            fixation.setAutoDraw(True)
+            fixation.setAutoDraw(True, log=False)
+            logging.log(level=logging.EXP, msg='Fixation on')
         if fixation.status == STARTED and t >= (fixStart + (fixTime - win.monitorFramePeriod*0.75)): #most of one frame period left
-            fixation.setAutoDraw(False)
+            fixation.setAutoDraw(False, log=False)
+            logging.log(level=logging.EXP, msg='Fixation off')
 
         # update other stims
         if t >= playStart and ball.status == NOT_STARTED:
-            ball.setAutoDraw(True)
-            bar.setAutoDraw(True)
-            line.setAutoDraw(True)
+            ball.setAutoDraw(True, log=False)
+            bar.setAutoDraw(True, log=False)
+            line.setAutoDraw(True, log=False)
+            logging.log(level=logging.EXP, msg='Start play')
             playOn = True
             playClock.reset()
 
@@ -205,9 +213,10 @@ while not endExpNow:  # main experiment loop
                 trialOver = True
 
         if trialOver:
-            ball.setAutoDraw(False)
-            bar.setAutoDraw(False)
-            line.setAutoDraw(False)
+            logging.log(level=logging.EXP, msg='End play')
+            ball.setAutoDraw(False, log=False)
+            bar.setAutoDraw(False, log=False)
+            line.setAutoDraw(False, log=False)
             endTrialNow = True
 
         # update screen
