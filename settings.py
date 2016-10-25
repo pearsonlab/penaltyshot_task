@@ -1,5 +1,3 @@
-import numpy as np
-from scipy.stats import beta
 from psychopy import gui
 import sys
 
@@ -17,6 +15,7 @@ def get_settings():
     dlg.addText('Players', color="Blue")
     dlg.addField('Subject ID/P1:', 'practice1')
     dlg.addField('P2', 'practice2')
+    dlg.addField('Day', 0)
     dlg.addText('')
     dlg.addText('Modes and VS Variables', color="Blue")
     dlg.addField('RunType','Vs', choices=runType_options)
@@ -31,7 +30,7 @@ def get_settings():
     dlg.addField('FullScreen', True, choices=[False,True])
     dlg.addText('')
 
-    fieldnames = ['SubjName', 'P2', 'runType', 'VS_trials', 'VS_runs', 'goalieType', 'prior', 'BallSpeed', 'full']
+    fieldnames = ['SubjName', 'P2', 'Day', 'runType', 'VS_trials', 'VS_runs', 'goalieType', 'prior', 'BallSpeed', 'full']
 
     dlg.show()
     if dlg.OK:
@@ -50,7 +49,7 @@ def setup_geometry(settings, win, **kwargs):
     else:
         frameDur = 1.0/60.0 # couldn't get a reliable measure so guess
 
-    settings['ScreenRect'] = win.size
+    settings['ScreenRect'] = tuple(win.size)
     W = float(settings['ScreenRect'][0])
     H = float(settings['ScreenRect'][1])
     settings['BallRadius'] = W / 128.;

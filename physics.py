@@ -2,15 +2,15 @@
 import numpy as np
 from psychopy import logging
 
-def update_ball(t, ball, settings):
+def update_ball(gt, t, ball, settings):
     # update ball coordinates
     x, y = ball.pos
-    ball.history.append((t, x, y))
+    ball.history.append((gt, t, x, y))
 
     # Only let the ball move once enough time has passed
     if t > settings['BallPauseStart']:
         jx, jy = ball.joystick.CalibratedJoystickAxes()
-        ball.jhistory.append((t, jx, jy))
+        ball.jhistory.append((gt, t, jx, jy))
 
         W, H = settings['ScreenRect']
 
@@ -28,24 +28,24 @@ def update_ball(t, ball, settings):
         new_y = max(-H/2. + settings['BallRadius'], min(y + settings['BallSpeed'] * jy, H/2 - settings['BallRadius']))
         ball.setPos((new_x, new_y), log=False)
     else:
-        ball.jhistory.append((t, 0., 0.))  # i.e., "disallow joystick input"
+        ball.jhistory.append((gt, t, 0., 0.))  # i.e., "disallow joystick input"
 
 
-def update_bar(t, bar, settings):
+def update_bar(gt, t, bar, settings):
     # update bar coordinates
     x, y = bar.pos
-    bar.history.append((t, x, y))
+    bar.history.append((gt, t, x, y))
     jx, jy = bar.joystick.CalibratedJoystickAxes()
-    bar.jhistory.append((t, jx, jy))
+    bar.jhistory.append((gt, t, jx, jy))
 
     # check conditions under which bar accelerates
     accel = 1.0  # default to 1.0
 
     # now check if we need to change
     if len(bar.history) > 2:
-        y_prev = bar.history[-1][2]
-        y_pprev = bar.history[-2][2]
-        y_ppprev = bar.history[-3][2]
+        y_prev = bar.history[-1][-1]
+        y_pprev = bar.history[-2][-1]
+        y_ppprev = bar.history[-3][-1]
         logging.log(level=logging.DEBUG, msg='previous y: ({}, {}, {})'.format(y_ppprev, y_pprev, y_prev))
 
         # check whether or not y coordinate has changed over the last two frames
@@ -73,3 +73,25 @@ def update_bar(t, bar, settings):
     new_y = max(-H/2. + barlen/2., min(new_y, H/2. - barlen/2.))
 
     bar.setPos((x, new_y), log=False)
+
+def check_outcome(ball, bar, settings):
+    # check whether end conditions for trial are met
+    winner = None  # default to no winner
+
+    ballx, bally = ball.pos
+    barx, bary = bar.pos
+    ballrad = settings['BallRadius']
+    barwid = settings['BarWidth']
+    barlen = settings['BarLength']
+
+    if ballx + settings['BallRadius'] > settings['FinalLine']:
+        # if ball has crossed goal line, ball wins
+        winner = 'ball'
+    elif (ballx + ballrad >= barx - barwid/2. and
+    ballx - ballrad <= barx - barwid/2. and
+    bally + ballrad > bary - barlen/2. and
+    bally - ballrad < bary + barlen/2.):
+        # if ball overlaps bar, goalie wins
+        winner = 'bar'
+
+    return winner

@@ -39,6 +39,18 @@ logging.console.setLevel(logging.WARNING)  # this outputs to the screen, not a f
 # log start time for the experiment
 logging.log(level=logging.EXP, msg='Task start time: {}:{}:{}'.format(t.hour, t.minute, t.second))
 
+# set up an object to store data as json
+dat = ({'experiment': 'penaltyshot', 'subject': config['SubjName'],
+        'start_time': '{}:{}:{}'.format(t.hour, t.minute, t.second),
+        'day': config['Day'], 'psychopy_start_time': core.getAbsTime(),
+        'settings': settings, 'config': config,
+        'data': []})
+
+# write out metadata
+json_fp = open(filename+'.json', 'w', buffering=1)
+json.dump(dat, json_fp)
+json_fp.write('\n')
+
 # Remove currentDate information for privacy/identification purposes.
 del t
 
@@ -125,7 +137,7 @@ while not endExpNow:  # main experiment loop
 
     ###### set up for  trial ############
     endTrialNow = False  # flag for escape from trial
-    trialOver = False  # has the trial completed
+    winner = None  # has the trial completed
     playOn = False  # has play commenced
     thisTrial += 1
     logging.log(level=logging.EXP, msg='Start trial {}'.format(thisTrial))
@@ -155,11 +167,13 @@ while not endExpNow:  # main experiment loop
     # timing setup
     t = 0  # time in trial
     frameN = -1  # frame within trial
+    tTrialStart = globalClock.getTime()
     trialClock.reset()  # reset trial clock
 
     ###### end trial setup ###############
 
     while not endTrialNow:  # trial loop
+        global_time = globalClock.getTime()  # current experiment time
         t = trialClock.getTime()  # current trial time
         frameN += 1  # increment frame number
 
@@ -177,10 +191,12 @@ while not endExpNow:  # main experiment loop
         # update fixation cross
         if t >= fixStart and fixation.status == NOT_STARTED:
             fixation.setAutoDraw(True, log=False)
+            tFixOn = global_time
             logging.log(level=logging.EXP, msg='Fixation on')
             trigger.flicker(1)
         if fixation.status == STARTED and t >= (fixStart + (fixTime - win.monitorFramePeriod*0.75)): #most of one frame period left
             fixation.setAutoDraw(False, log=False)
+            tFixOff = global_time
             logging.log(level=logging.EXP, msg='Fixation off')
 
         # update other stims
@@ -188,44 +204,32 @@ while not endExpNow:  # main experiment loop
             ball.setAutoDraw(True, log=False)
             bar.setAutoDraw(True, log=False)
             line.setAutoDraw(True, log=False)
+            tPlayStart = global_time
             logging.log(level=logging.EXP, msg='Start play')
-            trigger.flicker(4)
-
+            trigger.flicker(4)  # mark start of play; synced to playClock
             playOn = True
             playClock.reset()
 
+        # handle actual game play
         if playOn:
             tt = playClock.getTime()
-            physics.update_bar(tt, bar, settings)
-            physics.update_ball(tt, ball, settings)
+            physics.update_bar(global_time, tt, bar, settings)
+            physics.update_ball(global_time, tt, ball, settings)
 
             # check outcome
-            ballx, bally = ball.pos
-            barx, bary = bar.pos
-            ballrad = settings['BallRadius']
-            barwid = settings['BarWidth']
-            barlen = settings['BarLength']
+            winner = physics.check_outcome(ball, bar, settings)
 
-            # if ball has crossed goal line
-            if ballx + settings['BallRadius'] > settings['FinalLine']:
-                # ball wins
-                trialOver = True
-            # if ball overlaps bar
-            elif (ballx + ballrad >= barx - barwid/2. and
-            ballx - ballrad <= barx - barwid/2. and
-            bally + ballrad > bary - barlen/2. and
-            bally - ballrad < bary + barlen/2.):
-                # goalie wins
-                trialOver = True
-
-        if trialOver and playOn:
+        # conclusion of play
+        if winner and playOn:
             playOn = False
+            tPlayEnd = global_time
             logging.log(level=logging.EXP, msg='End play')
 
             # start of outcome period
             trigger.flicker(16)
             outcomeOverTime = t + settings['TimeToWaitAfterOutcome']
 
+        # end of outcome period
         if t > outcomeOverTime:
             # trial stim teardown
             ball.setAutoDraw(False, log=False)
@@ -237,13 +241,39 @@ while not endExpNow:  # main experiment loop
         win.flip()
 
     # clean up after trial
+    tTrialEnd = global_time
     logging.log(level=logging.EXP, msg='End trial {}'.format(thisTrial))
     logging.flush()
+
+    # save events to data object
+    this_dat = ({'ball_history': ball.history,
+                 'ball_joystick_history': ball.jhistory,
+                 'bar_history': bar.history,
+                 'bar_joystick_history': bar.jhistory,
+                 'bar_acceleration': bar.accel,
+                 'bar_max_move': bar.maxmove,
+                 'winner': winner,
+                 'times': ({'trial_start': tTrialStart,
+                            'fixation_on': tFixOn,
+                            'fixation_off': tFixOff,
+                            'play_start': tPlayStart,
+                            'play_end': tPlayEnd,
+                            'trial_end': tTrialEnd
+                            })
+                })
+    json.dump(this_dat, json_fp)  # dump to json
+    json_fp.write('\n')  # write newline to flush buffer
 
 
 # clean up after task
 logging.log(level=logging.EXP, msg='Ending task')
-t = datetime.now()
+
 # log end time for the experiment
+t = datetime.now()
 logging.log(level=logging.EXP, msg='Task finish time: {}:{}:{}'.format(t.hour, t.minute, t.second))
 logging.flush()
+
+# close out data object
+dat['psychopy_end_time'] = core.getAbsTime()
+dat['end_time'] = '{}:{}:{}'.format(t.hour, t.minute, t.second)
+json.dump(dat, json_fp)
