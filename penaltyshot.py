@@ -40,15 +40,17 @@ logging.console.setLevel(logging.WARNING)  # this outputs to the screen, not a f
 logging.log(level=logging.EXP, msg='Task start time: {}:{}:{}'.format(t.hour, t.minute, t.second))
 
 # set up an object to store data as json
-dat = ({'experiment': 'penaltyshot', 'subject': config['SubjName'],
-        'start_time': '{}:{}:{}'.format(t.hour, t.minute, t.second),
-        'day': config['Day'], 'psychopy_start_time': core.getAbsTime(),
-        'settings': settings, 'config': config,
-        'data': []})
+metadata = ({'experiment': 'penaltyshot',
+             'subject': config['SubjName'],
+             'start_time': '{}:{}:{}'.format(t.hour, t.minute, t.second),
+             'day': config['Day'],
+             'psychopy_start_time': core.getAbsTime(),
+             'settings': settings, 'config': config
+            })
 
 # write out metadata
 json_fp = open(filename+'.json', 'w', buffering=1)
-json.dump(dat, json_fp)
+json.dump(metadata, json_fp)
 json_fp.write('\n')
 
 # Remove currentDate information for privacy/identification purposes.
@@ -132,6 +134,7 @@ playClock = core.Clock()  # time within trial
 endExpNow = False  # flag for 'escape' or other condition => quit the exp
 thisTrial = 0
 logging.log(level=logging.EXP, msg='Starting task')
+dat['metadata']['task_start_time'] = globalClock.getTime()
 
 while not endExpNow:  # main experiment loop
 
@@ -276,7 +279,8 @@ logging.log(level=logging.EXP, msg='Task finish time: {}:{}:{}'.format(t.hour, t
 logging.flush()
 
 # close out data object
-dat['psychopy_end_time'] = core.getAbsTime()
-dat['end_time'] = '{}:{}:{}'.format(t.hour, t.minute, t.second)
+metadata['psychopy_end_time'] = core.getAbsTime()
+metadata['task_end_time'] = globalClock.getTime()
+metadata['end_time'] = '{}:{}:{}'.format(t.hour, t.minute, t.second)
 # re-dump metadata with end times included
-json.dump(dat, json_fp)
+json.dump(metadata, json_fp)
