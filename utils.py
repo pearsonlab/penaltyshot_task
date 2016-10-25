@@ -60,12 +60,12 @@ class Flicker(Circle):
             # if we've reached the end of the pattern
             if self.counter >= len(self.bitpattern):
                 self.bitpattern = None
-                self.fillColor = self.win.color
+                self.setFillColor(self.win.color, log=False)
             else:
                 if self.bitpattern[self.counter] == '1':
-                    self.fillColor = (255, 255, 255)
+                    self.setFillColor((255, 255, 255), log=False)
                 else:
-                    self.fillColor = (0, 0, 0)
+                    self.setFillColor((0, 0, 0), log=False)
 
                 # increment position in bit pattern
                 self.counter += 1

@@ -67,9 +67,6 @@ else:
     if nJoysticks > 1:
         J1 = JoystickServer(1, settings['Joystick1_DeadZone'])
 
-# set up photodiode trigger
-trigger = Flicker(win)
-
 ########## Set up stims #####################
 fixation = visual.TextStim(win, text='+',
                             alignHoriz='center',
@@ -100,6 +97,9 @@ bar = visual.ShapeStim(win,vertices=barVertices,fillColor='blue',
                        lineColor='blue', pos=(settings['BarStartingPosX'],
                        settings['BarStartingPosY']), name='bar')
 
+# set up photodiode trigger
+trigger = Flicker(win)
+
 ############# match inputs to players ###############
 # default to these assignments (can change by block)
 ball.joystick = J0
@@ -128,7 +128,6 @@ while not endExpNow:  # main experiment loop
     trialOver = False  # has the trial completed
     playOn = False  # has play commenced
     thisTrial += 1
-    event.clearEvents()
     logging.log(level=logging.EXP, msg='Start trial {}'.format(thisTrial))
 
     # reset stims
@@ -141,6 +140,7 @@ while not endExpNow:  # main experiment loop
     fixStart = 0.0
     fixTime = settings['FixCrossJitterMean']
     playStart = fixStart + fixTime
+    outcomeOverTime = np.inf
 
     # reset players
     ball.setPos((settings['BallStartingPosX'], settings['BallStartingPosY']), log=False)
@@ -171,10 +171,14 @@ while not endExpNow:  # main experiment loop
             endTrialNow = True
             endExpNow = True
 
+        # clear event buffer
+        event.clearEvents()
+
         # update fixation cross
         if t >= fixStart and fixation.status == NOT_STARTED:
             fixation.setAutoDraw(True, log=False)
             logging.log(level=logging.EXP, msg='Fixation on')
+            trigger.flicker(1)
         if fixation.status == STARTED and t >= (fixStart + (fixTime - win.monitorFramePeriod*0.75)): #most of one frame period left
             fixation.setAutoDraw(False, log=False)
             logging.log(level=logging.EXP, msg='Fixation off')
@@ -185,6 +189,8 @@ while not endExpNow:  # main experiment loop
             bar.setAutoDraw(True, log=False)
             line.setAutoDraw(True, log=False)
             logging.log(level=logging.EXP, msg='Start play')
+            trigger.flicker(4)
+
             playOn = True
             playClock.reset()
 
@@ -212,8 +218,16 @@ while not endExpNow:  # main experiment loop
                 # goalie wins
                 trialOver = True
 
-        if trialOver:
+        if trialOver and playOn:
+            playOn = False
             logging.log(level=logging.EXP, msg='End play')
+
+            # start of outcome period
+            trigger.flicker(16)
+            outcomeOverTime = t + settings['TimeToWaitAfterOutcome']
+
+        if t > outcomeOverTime:
+            # trial stim teardown
             ball.setAutoDraw(False, log=False)
             bar.setAutoDraw(False, log=False)
             line.setAutoDraw(False, log=False)
