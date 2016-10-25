@@ -8,6 +8,7 @@ from psychopy import gui, visual, event, core, logging, data
 from psychopy.constants import *  # things like STARTED, FINISHED
 from psychopy.hardware import joystick
 from input_handler import JoystickServer
+import physics
 from datetime import datetime
 import sys
 import os
@@ -62,9 +63,9 @@ if nJoysticks == 0:
     print('There is no joystick connected!')
     core.quit()
 else:
-    BallJoystick = JoystickServer(settings['BallJoystickNum'], settings['BallJoystickDeadZone'])
+    J0 = JoystickServer(0, settings['Joystick0_DeadZone'])
     if nJoysticks > 1:
-        BarJoystick = JoystickServer(settings['BarJoystickNum'], settings['BarJoystickDeadZone'])
+        J1 = JoystickServer(1, settings['Joystick1_DeadZone'])
 
 # set up photodiode trigger
 trigger = Flicker(win)
@@ -83,6 +84,11 @@ display_text = visual.TextStim(win, text='Your text here',
                                color=[255, 255, 255], colorSpace='rgb255',
                                wrapWidth=2, name='display_text',
                                autoLog=True)
+line = visual.Line(win, start=(settings['FinalLine'],
+                               settings['FinalLineHalfHeight']),
+                        end=(settings['FinalLine'],
+                               -settings['FinalLineHalfHeight']),
+                        name='goal_line')
 ball = visual.Circle(win, radius=settings['BallRadius'], fillColor='red',
                      lineColor='red', pos=(settings['BallStartingPosX'],
                      settings['BallStartingPosY']), name='ball')
@@ -93,11 +99,11 @@ barVertices = [ [-settings['BarWidth']/2., settings['BarLength']/2.],
 bar = visual.ShapeStim(win,vertices=barVertices,fillColor='blue',
                        lineColor='blue', pos=(settings['BarStartingPosX'],
                        settings['BarStartingPosY']), name='bar')
-line = visual.Line(win, start=(settings['FinalLine'],
-                               settings['FinalLineHalfHeight']),
-                        end=(settings['FinalLine'],
-                               -settings['FinalLineHalfHeight']),
-                        name='goal_line')
+
+############# match inputs to players ###############
+# default to these assignments (can change by block)
+ball.joystick = J0
+bar.joystcik = J1
 
 ############# finalize setup ###############
 # log all settings
@@ -108,6 +114,7 @@ logging.flush()
 # Create some handy timers
 globalClock = core.Clock()  # to track the time since experiment started
 trialClock = core.Clock()  # time within trial
+playClock = core.Clock()  # time within trial
 
 ############# prepare to start trial loop ###############
 endExpNow = False  # flag for 'escape' or other condition => quit the exp
@@ -119,7 +126,9 @@ while not endExpNow:  # main experiment loop
     ###### set up for  trial ############
     endTrialNow = False  # flag for escape from trial
     trialOver = False  # has the trial completed
+    playOn = False  # has play commenced
     thisTrial += 1
+    event.clearEvents(eventType='keyboard')
     logging.log(level=logging.EXP, msg='Start trial {}'.format(thisTrial))
 
     # reset stims
@@ -136,7 +145,7 @@ while not endExpNow:  # main experiment loop
     # reset players
     ball.pos = (settings['BallStartingPosX'], settings['BallStartingPosY'])
     bar.pos = (settings['BarStartingPosX'], settings['BarStartingPosY'])
-    accel = 1.0
+    ball.accel = 1.0
 
     # timing setup
     t = 0  # time in trial
@@ -159,9 +168,6 @@ while not endExpNow:  # main experiment loop
 
         # update fixation cross
         if t >= fixStart and fixation.status == NOT_STARTED:
-            # keep track of start time/frame for later
-            fixation.tStart = t  # underestimates by a little under one frame
-            fixation.frameNStart = frameN  # exact frame index
             fixation.setAutoDraw(True)
         if fixation.status == STARTED and t >= (fixStart + (fixTime - win.monitorFramePeriod*0.75)): #most of one frame period left
             fixation.setAutoDraw(False)
@@ -171,9 +177,32 @@ while not endExpNow:  # main experiment loop
             ball.setAutoDraw(True)
             bar.setAutoDraw(True)
             line.setAutoDraw(True)
+            playOn = True
+            playClock.reset()
 
-        if t > 3:
-            trialOver = True
+        if playOn:
+            tt = playClock.getTime()
+            physics.update_bar(tt, bar, settings)
+            physics.update_ball(tt, ball, settings)
+
+            # check outcome
+            ballx, bally = ball.pos
+            barx, bary = bar.pos
+            ballrad = settings['BallRadius']
+            barwid = settings['BarWidth']
+            barlen = settings['BarLength']
+
+            # if ball has crossed goal line
+            if ballx + settings['BallRadius'] > settings['FinalLine']:
+                # ball wins
+                trialOver = True
+            # if ball overlaps bar
+            elif (ballx + ballrad >= barx - barwid/2. and
+            ballx - ballrad <= barx - barwid/2. and
+            bally + ballrad > bary - barlen/2. and
+            bally - ballrad < bary + barlen/2.):
+                # goalie wins
+                trialOver = True
 
         if trialOver:
             ball.setAutoDraw(False)

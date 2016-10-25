@@ -91,10 +91,8 @@ settings = {
 
     'ScreenRefreshInterval': 60,
     'FixCrossJitterMean': 2,
-    'BallJoystickNum': 0,
-    'BarJoystickNum': 1,
-    'BallJoystickDeadZone':0.1,
-    'BarJoystickDeadZone': 0.1,
+    'Joystick0_DeadZone':0.1,
+    'Joystick1_DeadZone': 0.1,
     'ActiveScreen': 0,
 
     # Variables set before run
