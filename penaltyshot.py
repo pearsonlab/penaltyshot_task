@@ -107,17 +107,91 @@ logging.flush()
 
 # Create some handy timers
 globalClock = core.Clock()  # to track the time since experiment started
+trialClock = core.Clock()  # time within trial
 
 ############# prepare to start trial loop ###############
 endExpNow = False  # flag for 'escape' or other condition => quit the exp
+thisTrial = 0
+logging.log(level=logging.EXP, msg='Starting task')
 
-while not endExpNow:
-    theseKeys = event.getKeys(keyList=['escape'])
+while not endExpNow:  # main experiment loop
 
-    # check for quit:
-    if 'escape' in theseKeys:
-        endExpNow = True
-        t = datetime.now()
-        # log end time for the experiment
-        logging.log(level=logging.EXP, msg='Task finish time: {}:{}:{}'.format(t.hour, t.minute, t.second))
-        logging.flush()
+    ###### set up for  trial ############
+    endTrialNow = False  # flag for escape from trial
+    trialOver = False  # has the trial completed
+    thisTrial += 1
+    logging.log(level=logging.EXP, msg='Start trial {}'.format(thisTrial))
+
+    # reset stims
+    trialComponents = [fixation, display_text, ball, bar, line]
+    for thisComponent in trialComponents:
+        if hasattr(thisComponent, 'status'):
+            thisComponent.status = NOT_STARTED
+
+    # setup stim timing
+    fixStart = 0.0
+    fixTime = settings['FixCrossJitterMean']
+    playStart = fixStart + fixTime
+
+    # reset players
+    ball.pos = (settings['BallStartingPosX'], settings['BallStartingPosY'])
+    bar.pos = (settings['BarStartingPosX'], settings['BarStartingPosY'])
+    accel = 1.0
+
+    # timing setup
+    t = 0  # time in trial
+    frameN = -1  # frame within trial
+    trialClock.reset()  # reset trial clock
+
+    ###### end trial setup ###############
+
+    while not endTrialNow:  # trial loop
+        t = trialClock.getTime()  # current trial time
+        frameN += 1  # increment frame number
+
+        # handle keyboard input
+        theseKeys = event.getKeys(keyList=['escape'])
+
+        # check for quit:
+        if 'escape' in theseKeys:
+            endTrialNow = True
+            endExpNow = True
+
+        # update fixation cross
+        if t >= fixStart and fixation.status == NOT_STARTED:
+            # keep track of start time/frame for later
+            fixation.tStart = t  # underestimates by a little under one frame
+            fixation.frameNStart = frameN  # exact frame index
+            fixation.setAutoDraw(True)
+        if fixation.status == STARTED and t >= (fixStart + (fixTime - win.monitorFramePeriod*0.75)): #most of one frame period left
+            fixation.setAutoDraw(False)
+
+        # update other stims
+        if t >= playStart and ball.status == NOT_STARTED:
+            ball.setAutoDraw(True)
+            bar.setAutoDraw(True)
+            line.setAutoDraw(True)
+
+        if t > 3:
+            trialOver = True
+
+        if trialOver:
+            ball.setAutoDraw(False)
+            bar.setAutoDraw(False)
+            line.setAutoDraw(False)
+            endTrialNow = True
+
+        # update screen
+        win.flip()
+
+    # clean up after trial
+    logging.log(level=logging.EXP, msg='End trial {}'.format(thisTrial))
+    logging.flush()
+
+
+# clean up after task
+logging.log(level=logging.EXP, msg='Ending task')
+t = datetime.now()
+# log end time for the experiment
+logging.log(level=logging.EXP, msg='Task finish time: {}:{}:{}'.format(t.hour, t.minute, t.second))
+logging.flush()
