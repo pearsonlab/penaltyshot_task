@@ -17,20 +17,16 @@ def get_settings():
     dlg.addField('P2', 'practice2')
     dlg.addField('Day', 0)
     dlg.addText('')
-    dlg.addText('Modes and VS Variables', color="Blue")
-    dlg.addField('RunType','Vs', choices=runType_options)
+    dlg.addText('VS Variables', color="Blue")
     dlg.addField('Number of VS Trials', 20)
-    dlg.addField('Number of VS Runs', 2)
     dlg.addText('')
-    dlg.addText('Goalie Parameters', color="Blue")
-    dlg.addField('GoalieType','guess', choices=goalieType_options)
-    dlg.addField('prior', 1)
+    dlg.addText('Ball Parameters', color="Blue")
     dlg.addField('BallSpeed Factor', 1.0)
     dlg.addText('')
     dlg.addField('FullScreen', True, choices=[False,True])
     dlg.addText('')
 
-    fieldnames = ['SubjName', 'P2', 'Day', 'runType', 'VS_trials', 'VS_runs', 'goalieType', 'prior', 'BallSpeed', 'full']
+    fieldnames = ['SubjName', 'P2', 'Day', 'trials_in_block', 'BallSpeed', 'full']
 
     dlg.show()
     if dlg.OK:
@@ -48,6 +44,7 @@ def setup_geometry(settings, win, **kwargs):
         frameDur = 1.0/round(settings['frameRate'])
     else:
         frameDur = 1.0/60.0 # couldn't get a reliable measure so guess
+    settings['frameDur'] = frameDur
 
     settings['ScreenRect'] = tuple(win.size)
     W = float(settings['ScreenRect'][0])
@@ -66,7 +63,8 @@ def setup_geometry(settings, win, **kwargs):
     #position of the joystick vertical axis (which lies between -1 and
     #1), we multiply that value by BallSpeed, ensuring that the
     #ball's max vertical speed is the same as its horizontal speed
-    settings['BallSpeed'] = (W / 200.) * kwargs['BallSpeed']
+    ball_velocity = 1500. * kwargs['BallSpeed']  # in pix/s
+    settings['BallSpeed'] = ball_velocity * settings['frameDur'] # in pix/frame
 
     # To allow for bar acceleration, we start them with a slower speed and
     # an acceleration parameter, which determines how much their
@@ -90,6 +88,7 @@ settings = {
 
     'ScreenRefreshInterval': 60,
     'FixCrossJitterMean': 2,
+    'BlockMessageTime': 3,
     'Joystick0_DeadZone':0.1,
     'Joystick1_DeadZone': 0.1,
     'ActiveScreen': 0,
