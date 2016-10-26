@@ -134,7 +134,7 @@ playClock = core.Clock()  # time within trial
 endExpNow = False  # flag for 'escape' or other condition => quit the exp
 thisTrial = 0
 logging.log(level=logging.EXP, msg='Starting task')
-dat['metadata']['task_start_time'] = globalClock.getTime()
+metadata['task_start_time'] = globalClock.getTime()
 
 while not endExpNow:  # main experiment loop
 
