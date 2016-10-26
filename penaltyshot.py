@@ -80,6 +80,9 @@ else:
     J0 = JoystickServer(0, settings['Joystick0_DeadZone'])
     if nJoysticks > 1:
         J1 = JoystickServer(1, settings['Joystick1_DeadZone'])
+    else:
+        print('You need two joysticks to play!')
+        core.quit()
 
 ########## Set up stims #####################
 fixation = visual.TextStim(win, text='+',
@@ -88,12 +91,12 @@ fixation = visual.TextStim(win, text='+',
                             pos=(0, 0), height=0.3,
                             color=[255, 255, 255], colorSpace='rgb255',
                             wrapWidth=2, name='fix_cross', autoLog=True)
-display_text = visual.TextStim(win, text='Your text here',
+message_text = visual.TextStim(win, text='Your text here',
                                font='Helvetica', alignHoriz='center',
                                alignVert='center', units='norm',
                                pos=(0, 0), height=0.1,
                                color=[255, 255, 255], colorSpace='rgb255',
-                               wrapWidth=2, name='display_text',
+                               wrapWidth=2, name='message_text',
                                autoLog=True)
 line = visual.Line(win, start=(settings['FinalLine'],
                                settings['FinalLineHalfHeight']),
@@ -113,11 +116,6 @@ bar = visual.ShapeStim(win,vertices=barVertices,fillColor='blue',
 
 # set up photodiode trigger
 trigger = Flicker(win)
-
-############# match inputs to players ###############
-# default to these assignments (can change by block)
-ball.joystick = J0
-bar.joystick = J1
 
 ############# finalize setup ###############
 # log all settings
@@ -146,15 +144,55 @@ while not endExpNow:  # main experiment loop
     endTrialNow = False  # flag for escape from trial
     winner = None  # has the trial completed
     playOn = False  # has play commenced
+    blockSwitch = False
+    showMessage = False
+
+    # block logic
+    if thisTrial % config['trials_in_block'] == 1:
+        if thisTrial == 1:
+            # assign joysticks
+            ball.joystick = J0
+            bar.joystick = J1
+        else:
+            blockSwitch = True
+            # swap joysticks
+            J = ball.joystick
+            ball.joystick = bar.joystick
+            bar.joystick = J
+            del J
+
+        # log it
+        if ball.joystick is J0:
+            jmsg = 'Joysticks: Ball = 0, Bar = 1'
+        else:
+            jmsg = 'Joysticks: Ball = 1, Bar = 0'
+        logging.log(level=logging.EXP, msg=jmsg)
 
     # reset stims
-    trialComponents = [fixation, display_text, ball, bar, line]
+    trialComponents = [fixation, message_text, ball, bar, line]
     for thisComponent in trialComponents:
         if hasattr(thisComponent, 'status'):
             thisComponent.status = NOT_STARTED
 
     # setup stim timing
-    fixStart = 0.0
+    # have to reset these to None because they don't necessarily
+    # get set during trial
+    tTrialStart = None
+    tMsgOn = None
+    tMsgOff = None
+    tFixOn = None
+    tFixOff = None
+    tPlayStart = None
+    tPlayEnd = None
+    tTrialEnd = None
+    if blockSwitch:
+        showMessage = True
+        msgStart = 0.0
+        msgTime = settings['BlockMessageTime']
+        message_text.setText('Switch roles!', log=False)
+        fixStart = msgStart + msgTime
+    else:
+        fixStart = 0.0
     fixTime = settings['FixCrossJitterMean']
     playStart = fixStart + fixTime
     outcomeOverTime = np.inf
@@ -192,6 +230,18 @@ while not endExpNow:  # main experiment loop
 
         # clear event buffer
         event.clearEvents()
+
+        # update message
+        if showMessage and t >= msgStart and message_text.status == NOT_STARTED:
+            message_text.setAutoDraw(True, log=False)
+            tMsgOn = global_time
+            logging.log(level=logging.EXP, msg='Message on')
+            trigger.flicker(1)
+        if message_text.status == STARTED and t >= (msgStart + (fixTime - win.monitorFramePeriod*0.75)): #most of one frame period left
+            message_text.setAutoDraw(False, log=False)
+            showMessage = False
+            tMsgOff = global_time
+            logging.log(level=logging.EXP, msg='Message off')
 
         # update fixation cross
         if t >= fixStart and fixation.status == NOT_STARTED:
@@ -259,6 +309,8 @@ while not endExpNow:  # main experiment loop
                  'bar_max_move': bar.maxmove,
                  'winner': winner,
                  'times': ({'trial_start': tTrialStart,
+                            'message_on': tMsgOn,
+                            'message_off': tMsgOff,
                             'fixation_on': tFixOn,
                             'fixation_off': tFixOff,
                             'play_start': tPlayStart,
