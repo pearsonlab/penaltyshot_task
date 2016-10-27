@@ -69,7 +69,7 @@ def setup_geometry(settings, win, **kwargs):
     # To allow for bar acceleration, we start them with a slower speed and
     # an acceleration parameter, which determines how much their
     # speed increases each move they continue in the same direction
-    settings['BarJoystickBaseSpeed'] = settings['BallSpeed'] / 1.5
+    settings['BarJoystickBaseSpeed'] = settings['BallSpeed'] / 1.25
     settings['BarJoystickAccelIncr'] = settings['BallSpeed'] / 90.
 
     return
