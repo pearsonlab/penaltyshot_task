@@ -175,7 +175,7 @@ def Wrapper_Penaltykick():
 
     # Open up a screen in PsychoPy. Arrange the settings for the ball, bar,
     # and final line positions based on the resolution of that screen.
-    win = visual.Window(size=(800, 600), units='pix', winType = 'pygame', screen=0,
+    win = visual.Window(size=(800, 600), units='pix', winType = 'pygame', screen=1,
                         monitor='testMonitor', fullscr=full, colorSpace='rgb255',
                         color=(0, 0, 0))
     settings.ScreenRect = win.size
