@@ -15,6 +15,7 @@ import os
 import json
 from utils import Flicker
 from settings import *
+import resource
 
 ############## Paths, config, logging ######################
 # Ensure that relative paths start from the same directory as this script
@@ -31,9 +32,10 @@ config = get_settings()
 
 # Data file name stem = absolute path + name; later add .psyexp, .csv, .log, etc
 filename = _thisDir + os.sep + u'data/%s_%s_%s' %(config['SubjName'], 'penaltyshot', settings['overallStartTime'])
+logname = _thisDir + os.sep + u'kelseydata/%s_%s_%s' %(config['SubjName'], 'penaltyshot', settings['overallStartTime'])
 
 #save a log file for detail verbose info
-logFile = logging.LogFile(filename+'.log', level=logging.EXP)
+logFile = logging.LogFile(logname+'.log', level=logging.EXP)
 logging.console.setLevel(logging.WARNING)  # this outputs to the screen, not a file
 
 # log start time for the experiment
@@ -83,6 +85,7 @@ else:
     else:
         print('You need two joysticks to play!')
         core.quit()
+breakTrials = []
 
 ########## Set up stims #####################
 fixation = visual.TextStim(win, text='+',
@@ -103,15 +106,15 @@ line = visual.Line(win, start=(settings['FinalLine'],
                         end=(settings['FinalLine'],
                                -settings['FinalLineHalfHeight']),
                         name='goal_line')
-ball = visual.Circle(win, radius=settings['BallRadius'], fillColor='red',
-                     lineColor='red', pos=(settings['BallStartingPosX'],
+ball = visual.Circle(win, radius=settings['BallRadius'], fillColor='gray',
+                     lineColor='gray', pos=(settings['BallStartingPosX'],
                      settings['BallStartingPosY']), name='ball')
 barVertices = [ [-settings['BarWidth']/2., settings['BarLength']/2.],
                 [settings['BarWidth']/2., settings['BarLength']/2.],
                 [settings['BarWidth']/2., -settings['BarLength']/2.],
                 [-settings['BarWidth']/2., -settings['BarLength']/2.] ]
-bar = visual.ShapeStim(win,vertices=barVertices,fillColor='blue',
-                       lineColor='blue', pos=(settings['BarStartingPosX'],
+bar = visual.ShapeStim(win,vertices=barVertices,fillColor='gray',
+                       lineColor='gray', pos=(settings['BarStartingPosX'],
                        settings['BarStartingPosY']), name='bar')
 
 # set up photodiode trigger
@@ -133,6 +136,14 @@ endExpNow = False  # flag for 'escape' or other condition => quit the exp
 thisTrial = 0
 logging.log(level=logging.EXP, msg='Starting task')
 metadata['task_start_time'] = globalClock.getTime()
+#new block logic--subject will always be the shooter
+ball.joystick = J0
+bar.joystick = J1
+#if ball.joystick is J0:
+jmsg = 'Joysticks: Ball = 0, Bar = 1'
+#else:
+#    jmsg = 'Joysticks: Ball = 1, Bar = 0'
+logging.log(level=logging.EXP, msg=jmsg)
 
 while not endExpNow:  # main experiment loop
 
@@ -147,26 +158,22 @@ while not endExpNow:  # main experiment loop
     blockSwitch = False
     showMessage = False
 
-    # block logic
-    if thisTrial % config['trials_in_block'] == 1:
-        if thisTrial == 1:
-            # assign joysticks
-            ball.joystick = J0
-            bar.joystick = J1
-        else:
-            blockSwitch = True
-            # swap joysticks
-            J = ball.joystick
-            ball.joystick = bar.joystick
-            bar.joystick = J
-            del J
+    # old block logic
+    #if thisTrial % config['trials_in_block'] == 1:
+    #    if thisTrial == 1:
+    #        # assign joysticks
+    #        ball.joystick = J0
+    #        bar.joystick = J1
+    #    else:
+    #        blockSwitch = True
+    #        # swap joysticks
+    #        J = ball.joystick
+    #        ball.joystick = bar.joystick
+    #        bar.joystick = J
+    #        del J
 
         # log it
-        if ball.joystick is J0:
-            jmsg = 'Joysticks: Ball = 0, Bar = 1'
-        else:
-            jmsg = 'Joysticks: Ball = 1, Bar = 0'
-        logging.log(level=logging.EXP, msg=jmsg)
+    
 
     # reset stims
     trialComponents = [fixation, message_text, ball, bar, line]
@@ -221,15 +228,23 @@ while not endExpNow:  # main experiment loop
         frameN += 1  # increment frame number
 
         # handle keyboard input
-        theseKeys = event.getKeys(keyList=['escape'])
+        theseKeys = event.getKeys(keyList=['escape','space'])
 
         # check for quit:
         if 'escape' in theseKeys:
-            endTrialNow = True
-            endExpNow = True
+        	endTrialNow = True
+        	endExpNow = True
 
         # clear event buffer
         event.clearEvents()
+
+        # check for requested break:
+        if 'space' in theseKeys:
+        	event.waitKeys()
+        	logging.log(level=logging.EXP, msg='Sub needed break on trial {}'.format(thisTrial))
+        	endExpNow = False
+        	breakTrials.append(thisTrial)
+        	#endTrialNow = True
 
         # update message
         if showMessage and t >= msgStart and message_text.status == NOT_STARTED:
@@ -264,6 +279,7 @@ while not endExpNow:  # main experiment loop
             trigger.flicker(4)  # mark start of play; synced to playClock
             playOn = True
             playClock.reset()
+            #logging.log(level=logging.EXP, msg='Memory {}'.format(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss,"kb"))
 
         # handle actual game play
         if playOn:
@@ -307,6 +323,7 @@ while not endExpNow:  # main experiment loop
                  'bar_joystick_history': bar.jhistory,
                  'bar_acceleration': bar.accel,
                  'bar_max_move': bar.maxmove,
+                 'breakTrials' : breakTrials,
                  'winner': winner,
                  'times': ({'trial_start': tTrialStart,
                             'message_on': tMsgOn,
@@ -320,7 +337,7 @@ while not endExpNow:  # main experiment loop
                 })
     json.dump(this_dat, json_fp)  # dump to json
     json_fp.write('\n')  # write newline to flush buffer
-
+    event.clearEvents()
 
 # clean up after task
 logging.log(level=logging.EXP, msg='Ending task')
