@@ -15,7 +15,6 @@ import os
 import json
 from utils import Flicker
 from settings import *
-import resource
 
 ############## Paths, config, logging ######################
 # Ensure that relative paths start from the same directory as this script
@@ -31,8 +30,8 @@ settings['overallStartTime'] = '%d.%d.%d' % (t.hour, t.minute, t.second)
 config = get_settings()
 
 # Data file name stem = absolute path + name; later add .psyexp, .csv, .log, etc
-filename = _thisDir + os.sep + u'data/%s_%s_%s' %(config['SubjName'], 'penaltyshot', settings['overallStartTime'])
-logname = _thisDir + os.sep + u'kelseydata/%s_%s_%s' %(config['SubjName'], 'penaltyshot', settings['overallStartTime'])
+filename = _thisDir + os.sep + u'data' + os.sep + u'%s_%s_%s' %(config['SubjName'], 'penaltyshot', settings['overallStartTime'])
+logname = _thisDir + os.sep + u'data' + os.sep + u'%s_%s_%s' %(config['SubjName'], 'penaltyshot', settings['overallStartTime'])
 
 #save a log file for detail verbose info
 logFile = logging.LogFile(logname+'.log', level=logging.EXP)
@@ -279,7 +278,6 @@ while not endExpNow:  # main experiment loop
             trigger.flicker(4)  # mark start of play; synced to playClock
             playOn = True
             playClock.reset()
-            #logging.log(level=logging.EXP, msg='Memory {}'.format(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss,"kb"))
 
         # handle actual game play
         if playOn:
